@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Eye, ThumbsUp, Users, BarChart2, TrendingUp, Video } from 'lucide-react';
+import { Eye, ThumbsUp, Users, BarChart2, TrendingUp, Video, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { analyticsApi } from '../../services/api';
+import { analyticsApi, videoApi } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import Spinner from '../../components/common/Spinner';
+import toast from 'react-hot-toast';
 
 function StatCard({ icon: Icon, label, value, color = 'text-red-400' }) {
   return (
@@ -20,11 +21,23 @@ function StatCard({ icon: Icon, label, value, color = 'text-red-400' }) {
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
 
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['channelAnalytics'],
     queryFn: () => analyticsApi.getChannelAnalytics(),
     select: (res) => res.data,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => videoApi.delete(id),
+    onSuccess: () => {
+      toast.success('Video deleted successfully');
+      qc.invalidateQueries(['channelAnalytics']);
+    },
+    onError: () => {
+      toast.error('Failed to delete video');
+    }
   });
 
   const formatNum = (n) => {
@@ -89,6 +102,7 @@ export default function DashboardPage() {
                     <th className="text-right px-4 py-3 font-medium">Likes</th>
                     <th className="text-right px-4 py-3 font-medium">Comments</th>
                     <th className="text-right px-4 py-3 font-medium">Published</th>
+                    <th className="text-right px-4 py-3 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,6 +125,20 @@ export default function DashboardPage() {
                       <td className="px-4 py-3 text-right text-gray-400">{formatNum(video.commentCount)}</td>
                       <td className="px-4 py-3 text-right text-gray-500 whitespace-nowrap text-xs">
                         {formatDistanceToNow(new Date(video.createdAt), { addSuffix: true })}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button 
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this video?')) {
+                              deleteMutation.mutate(video._id);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                          className="text-gray-500 hover:text-red-400 p-1 rounded-md transition-colors disabled:opacity-50"
+                          title="Delete Video"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </td>
                     </tr>
                   ))}

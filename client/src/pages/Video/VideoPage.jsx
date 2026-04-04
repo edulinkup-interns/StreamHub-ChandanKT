@@ -144,7 +144,7 @@ function CommentSection({ videoId }) {
                     {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                   </span>
                 </div>
-                <p className="text-sm text-gray-300">{comment.text}</p>
+                <p className="text-sm text-gray-300">{comment.content}</p>
                 <div className="flex items-center gap-3 mt-2">
                   <button
                     onClick={() => user ? likeMutation.mutate(comment._id) : toast.error('Sign in to like')}
