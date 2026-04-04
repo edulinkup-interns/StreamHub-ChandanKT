@@ -19,8 +19,21 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
-// Security
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+// Security - configured CSP to allow Cloudinary images and external media
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
+      mediaSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
+      connectSrc: ["'self'", 'https:'],
+    },
+  },
+}));
 
 // CORS - Dynamic for local development vs production monolith
 const corsOptions = {
