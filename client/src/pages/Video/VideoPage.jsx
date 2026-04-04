@@ -11,37 +11,50 @@ import VideoCard from '../../components/common/VideoCard';
 import Spinner from '../../components/common/Spinner';
 
 function VideoPlayer({ video }) {
-  const videoRef = useRef(null);
+  const containerRef = useRef(null);
   const playerRef = useRef(null);
 
   useEffect(() => {
-    if (!video?.videoUrl || !videoRef.current) return;
+    if (!video?.videoUrl || !containerRef.current) return;
+
+    let player;
 
     import('video.js').then(({ default: videojs }) => {
-      if (playerRef.current) {
-        playerRef.current.dispose();
+      if (!playerRef.current) {
+        // Programmatically create the video element to avoid React DOM mutation issues
+        const videoElement = document.createElement('video-js');
+        videoElement.className = 'video-js vjs-big-play-centered w-full rounded-xl overflow-hidden';
+        containerRef.current.appendChild(videoElement);
+
+        player = videojs(videoElement, {
+          controls: true,
+          responsive: true,
+          fluid: true,
+          preload: 'auto',
+          sources: [{ src: video.videoUrl, type: 'video/mp4' }],
+          poster: video.thumbnailUrl,
+        });
+
+        playerRef.current = player;
+      } else {
+        // Update existing player
+        player = playerRef.current;
+        player.src([{ src: video.videoUrl, type: 'video/mp4' }]);
+        player.poster(video.thumbnailUrl);
       }
-      playerRef.current = videojs(videoRef.current, {
-        controls: true,
-        responsive: true,
-        fluid: true,
-        preload: 'auto',
-        sources: [{ src: video.videoUrl, type: 'video/mp4' }],
-        poster: video.thumbnailUrl,
-      });
     });
 
     return () => {
-      if (playerRef.current) {
+      if (playerRef.current && !playerRef.current.isDisposed()) {
         playerRef.current.dispose();
         playerRef.current = null;
       }
     };
-  }, [video?.videoUrl]);
+  }, [video?.videoUrl, video?.thumbnailUrl]);
 
   return (
     <div data-vjs-player>
-      <video ref={videoRef} className="video-js vjs-big-play-centered w-full rounded-xl overflow-hidden" />
+      <div ref={containerRef} className="w-full rounded-xl overflow-hidden bg-black" />
     </div>
   );
 }
