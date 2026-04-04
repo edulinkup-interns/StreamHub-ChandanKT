@@ -63,7 +63,7 @@ export default function UploadPage() {
       toast.success('Video uploaded successfully!');
       navigate(`/watch/${res.data._id}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Upload failed');
       setIsUploading(false);
     }
   };

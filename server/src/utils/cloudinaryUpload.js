@@ -3,7 +3,11 @@ const streamifier = require('streamifier');
 
 const uploadFromBuffer = (buffer, options = {}) => {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+    const streamMethod = options.resource_type === 'video' 
+      ? cloudinary.uploader.upload_chunked_stream 
+      : cloudinary.uploader.upload_stream;
+      
+    const stream = streamMethod(options, (error, result) => {
       if (error) return reject(error);
       resolve(result);
     });

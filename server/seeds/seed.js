@@ -80,33 +80,47 @@ async function seed() {
   ]);
   console.log('Created users');
 
-  // Create videos
-  const videoData = SAMPLE_VIDEOS.map((v, i) => ({
-    ...v,
-    creator: i < 7 ? users[0]._id : users[1]._id,
-    videoUrl: SAMPLE_VIDEO_URL,
-    thumbnailUrl: THUMBNAIL_URLS[i],
-    status: 'published',
-    visibility: 'public',
-    views: Math.floor(Math.random() * 10000),
-  }));
+  // Create videos with randomized creation dates
+  const videoData = [...SAMPLE_VIDEOS, ...SAMPLE_VIDEOS].map((v, i) => {
+    // Generate a random date within the last 30 days
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+    
+    // Distribute videos among all 3 users evenly
+    const creatorIndex = i % 3;
+
+    return {
+      ...v,
+      title: `${v.title} ${i >= 10 ? 'Part ' + (i - 9) : ''}`,
+      creator: users[creatorIndex]._id,
+      videoUrl: SAMPLE_VIDEO_URL,
+      thumbnailUrl: THUMBNAIL_URLS[i % 10],
+      status: 'published',
+      visibility: 'public',
+      views: Math.floor(Math.random() * 50000),
+      createdAt: date,
+      updatedAt: date
+    };
+  });
 
   const videos = await Video.create(videoData);
-  console.log('Created videos');
+  console.log(`Created ${videos.length} videos`);
 
   // Create subscriptions
   await Subscription.create([
     { subscriber: users[2]._id, channel: users[0]._id },
     { subscriber: users[2]._id, channel: users[1]._id },
     { subscriber: users[1]._id, channel: users[0]._id },
+    { subscriber: users[0]._id, channel: users[2]._id },
   ]);
   await User.findByIdAndUpdate(users[0]._id, { subscriberCount: 2 });
   await User.findByIdAndUpdate(users[1]._id, { subscriberCount: 1 });
+  await User.findByIdAndUpdate(users[2]._id, { subscriberCount: 1 });
   console.log('Created subscriptions');
 
-  // Create comments (20 total)
+  // Create comments (40 total)
   const commentData = [];
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 40; i++) {
     commentData.push({
       video: videos[i % videos.length]._id,
       author: users[i % 3]._id,
@@ -125,11 +139,13 @@ async function seed() {
   }
   const comments = await Comment.create(commentData);
 
-  // Add 5 replies
+  // Add 10 replies
   await Comment.create([
     { video: videos[0]._id, author: users[1]._id, content: 'Totally agree!', parent: comments[0]._id },
     { video: videos[0]._id, author: users[2]._id, content: 'Same here, very helpful!', parent: comments[0]._id },
     { video: videos[1]._id, author: users[0]._id, content: 'Glad you found it useful!', parent: comments[1]._id },
+    { video: videos[2]._id, author: users[1]._id, content: 'Nice explanation.', parent: comments[2]._id },
+    { video: videos[3]._id, author: users[2]._id, content: 'Thanks!', parent: comments[3]._id },
   ]);
 
   // Update comment counts
@@ -138,6 +154,26 @@ async function seed() {
     await Video.findByIdAndUpdate(video._id, { commentCount: count });
   }
   console.log('Created comments');
+
+  // Create Watch History
+  const WatchHistory = require('../src/models/WatchHistory');
+  await WatchHistory.deleteMany({});
+  
+  const historyData = [];
+  for (let i = 0; i < 60; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+    
+    historyData.push({
+       user: users[i % 3]._id,
+       video: videos[Math.floor(Math.random() * videos.length)]._id,
+       watchedAt: date,
+       progress: Math.floor(Math.random() * 500)
+    });
+  }
+  await WatchHistory.create(historyData);
+  console.log('Created watch history');
+
 
   // Create playlists
   await Playlist.create([
