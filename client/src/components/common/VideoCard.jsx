@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
 const formatViews = (views) => {
@@ -17,15 +17,23 @@ const formatDuration = (seconds) => {
 };
 
 export default function VideoCard({ video, horizontal = false }) {
+  const navigate = useNavigate();
+
   if (!video) return null;
 
   const timeAgo = video.createdAt
     ? formatDistanceToNow(new Date(video.createdAt), { addSuffix: true })
     : '';
 
+  const handleCardClick = (e) => {
+    // Only navigate to watch page if the click didn't originate from a Link inside the card
+    if (e.target.closest('a')) return;
+    navigate(`/watch/${video._id}`);
+  };
+
   if (horizontal) {
     return (
-      <Link to={`/watch/${video._id}`} className="flex gap-3 group hover:bg-gray-800 rounded-xl p-2 transition-colors">
+      <div onClick={handleCardClick} className="flex gap-3 group hover:bg-gray-800 rounded-xl p-2 transition-colors cursor-pointer">
         <div className="relative flex-shrink-0 w-40 aspect-video rounded-lg overflow-hidden bg-gray-800">
           {video.thumbnailUrl
             ? <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -38,15 +46,15 @@ export default function VideoCard({ video, horizontal = false }) {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium line-clamp-2 group-hover:text-red-400 transition-colors">{video.title}</h3>
-          <p className="text-gray-400 text-xs mt-1">{video.creator?.displayName || video.creator?.username}</p>
-          <p className="text-gray-500 text-xs">{formatViews(video.views)} views · {timeAgo}</p>
+          <Link to={`/channel/${video.creator?.username}`} className="text-gray-400 text-xs mt-1 hover:text-white inline-block relative z-10">{video.creator?.displayName || video.creator?.username}</Link>
+          <p className="text-gray-500 text-xs mt-0.5">{formatViews(video.views)} views · {timeAgo}</p>
         </div>
-      </Link>
+      </div>
     );
   }
 
   return (
-    <Link to={`/watch/${video._id}`} className="video-card group">
+    <div onClick={handleCardClick} className="video-card group cursor-pointer">
       <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-800 mb-3">
         {video.thumbnailUrl
           ? <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
@@ -58,7 +66,7 @@ export default function VideoCard({ video, horizontal = false }) {
         )}
       </div>
       <div className="flex gap-3">
-        <Link to={`/channel/${video.creator?.username}`} className="flex-shrink-0">
+        <Link to={`/channel/${video.creator?.username}`} className="flex-shrink-0 relative z-10">
           {video.creator?.avatar
             ? <img src={video.creator.avatar} alt="" className="w-9 h-9 rounded-full object-cover" />
             : <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center text-sm font-bold">
@@ -69,12 +77,12 @@ export default function VideoCard({ video, horizontal = false }) {
           <h3 className="font-medium text-sm line-clamp-2 group-hover:text-red-400 transition-colors leading-snug">
             {video.title}
           </h3>
-          <Link to={`/channel/${video.creator?.username}`} className="text-gray-400 text-xs mt-1 hover:text-white block">
+          <Link to={`/channel/${video.creator?.username}`} className="text-gray-400 text-xs mt-1 hover:text-white inline-block relative z-10">
             {video.creator?.displayName || video.creator?.username}
           </Link>
-          <p className="text-gray-500 text-xs">{formatViews(video.views)} views · {timeAgo}</p>
+          <p className="text-gray-500 text-xs mt-0.5">{formatViews(video.views)} views · {timeAgo}</p>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

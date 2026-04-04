@@ -19,15 +19,18 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 
-// Security - configured CSP to allow Cloudinary images and external media
+// Trust proxy for Render (required for express-rate-limit behind a reverse proxy)
+app.set('trust proxy', 1);
+
+// Security - configured CSP to allow Cloudinary images, external media, and video.js assets
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://vjs.zencdn.net'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
       mediaSrc: ["'self'", 'data:', 'blob:', 'https:', 'http:'],
       connectSrc: ["'self'", 'https:'],
