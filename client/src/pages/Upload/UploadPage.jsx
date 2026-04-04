@@ -60,8 +60,11 @@ export default function UploadPage() {
       setIsUploading(true);
       setUploadProgress(0);
       const res = await videoApi.upload(formData, setUploadProgress);
-      toast.success('Video uploaded successfully!');
-      navigate(`/watch/${res.data._id}`);
+      // Wait a moment for UX before navigating
+      setTimeout(() => {
+        toast.success(res.data?.message || 'Video uploaded and is processing!');
+        navigate('/dashboard');
+      }, 1000);
     } catch (err) {
       toast.error(err.response?.data?.error || err.response?.data?.message || 'Upload failed');
       setIsUploading(false);

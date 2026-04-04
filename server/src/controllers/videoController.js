@@ -12,38 +12,53 @@ exports.uploadVideo = async (req, res, next) => {
     }
 
     const videoBuffer = req.files.video[0].buffer;
-    const videoResult = await uploadVideo(videoBuffer);
+    const thumbBuffer = req.files?.thumbnail?.[0] ? req.files.thumbnail[0].buffer : null;
+    const userId = req.user._id;
 
-    let thumbnailUrl = '';
-    let thumbnailPublicId = '';
-    if (req.files?.thumbnail?.[0]) {
-      const thumbResult = await uploadImage(req.files.thumbnail[0].buffer);
-      thumbnailUrl = thumbResult.secure_url;
-      thumbnailPublicId = thumbResult.public_id;
-    } else {
-      // Auto-generate thumbnail from video
-      thumbnailUrl = videoResult.secure_url.replace(/\.[^/.]+$/, '.jpg')
-        .replace('/video/upload/', '/video/upload/so_0/');
-    }
-
-    const video = await Video.create({
-      title,
-      description,
-      creator: req.user._id,
-      videoUrl: videoResult.secure_url,
-      cloudinaryPublicId: videoResult.public_id,
-      thumbnailUrl,
-      thumbnailPublicId,
-      duration: Math.round(videoResult.duration || 0),
-      category,
-      tags: tags ? tags.split(',').map(t => t.trim()) : [],
-      visibility: visibility || 'public',
-      status: 'published',
-      format: videoResult.format,
+    // Acknowledge receipt to avoid 100s proxy timeout on Render
+    res.status(202).json({ 
+      message: 'Upload received and is processing. It will appear on your channel shortly.' 
     });
 
-    await video.populate('creator', 'username displayName avatar');
-    res.status(201).json(video);
+    // Process Cloudinary upload and Database save asynchronously
+    setImmediate(async () => {
+      try {
+        const videoResult = await uploadVideo(videoBuffer);
+
+        let thumbnailUrl = '';
+        let thumbnailPublicId = '';
+        if (thumbBuffer) {
+          const thumbResult = await uploadImage(thumbBuffer);
+          thumbnailUrl = thumbResult.secure_url;
+          thumbnailPublicId = thumbResult.public_id;
+        } else {
+          // Auto-generate thumbnail from video
+          thumbnailUrl = videoResult.secure_url.replace(/\.[^/.]+$/, '.jpg')
+            .replace('/video/upload/', '/video/upload/so_0/');
+        }
+
+        const video = await Video.create({
+          title,
+          description,
+          creator: userId,
+          videoUrl: videoResult.secure_url,
+          cloudinaryPublicId: videoResult.public_id,
+          thumbnailUrl,
+          thumbnailPublicId,
+          duration: Math.round(videoResult.duration || 0),
+          category,
+          tags: tags ? tags.split(',').map(t => t.trim()) : [],
+          visibility: visibility || 'public',
+          status: 'published',
+          format: videoResult.format,
+        });
+
+        console.log(`Video processing complete: ${video._id}`);
+      } catch (err) {
+        console.error('Background upload process failed:', err);
+      }
+    });
+
   } catch (err) {
     next(err);
   }
