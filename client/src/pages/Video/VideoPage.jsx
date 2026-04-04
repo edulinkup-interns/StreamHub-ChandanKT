@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import 'video.js/dist/video-js.css';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
