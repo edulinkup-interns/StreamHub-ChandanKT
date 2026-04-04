@@ -1,4 +1,4 @@
-# StreamHub — Premium MERN Video Streaming Platform
+# StreamHub : Premium MERN Video Streaming Platform
 
 StreamHub is a state-of-the-art video streaming ecosystem, engineering a high-fidelity experience from the ground up. Combining the power of the **MERN stack** with absolute **Cloudinary video resilience** and a deep **Llama-3 powered AI Recommendation Engine**, StreamHub offers a truly modern platform for creators and viewers alike.
 
@@ -89,4 +89,3 @@ npm run seed  # Optional: Seed the database with analytics-ready data
 npm run dev   # Launch concurrent development servers
 ```
 
-Visit **[http://localhost:5173](http://localhost:5173)** to explore the project!
