@@ -161,7 +161,7 @@ export default function DashboardPage() {
                 const max = Math.max(...analytics.growth.map((p) => p.views || 0)) || 1;
                 const height = Math.max(4, ((point.views || 0) / max) * 100);
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                  <div key={i} className="flex-1 h-full flex flex-col items-center justify-end gap-1 group">
                     <div
                       className="w-full bg-red-600 rounded-t opacity-70 group-hover:opacity-100 transition-opacity"
                       style={{ height: `${height}%` }}
